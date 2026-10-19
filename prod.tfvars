@@ -1,0 +1,17 @@
+project_name               = "terraform-ostad"
+environment                = "prod"
+aws_region                 = "us-east-1"
+vpc_cidr                   = "10.0.0.0/16"
+owner                      = "team-name"
+single_nat_gateway         = false
+app_instance_type          = "t3.small"
+app_min_size               = 2
+app_desired_capacity       = 2
+app_max_size               = 6
+db_name                    = "appdb"
+db_instance_class          = "db.t3.small"
+db_multi_az                = true
+db_deletion_protection     = true
+db_backup_retention_period = 7
+db_skip_final_snapshot     = false
+enable_bastion             = false

@@ -77,3 +77,16 @@ module "s3" {
   project_name = var.project_name
   environment  = var.environment
 }
+
+module "bastion" {
+  count  = var.enable_bastion ? 1 : 0
+  source = "./modules/bastion"
+
+  project_name              = var.project_name
+  environment               = var.environment
+  owner                     = var.owner
+  public_subnet_id          = module.vpc.public_subnet_ids[0]
+  bastion_security_group_id = module.security_groups.bastion_security_group_id
+  instance_type             = var.bastion_instance_type
+  key_name                  = var.bastion_key_name
+}

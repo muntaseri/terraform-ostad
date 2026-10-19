@@ -153,3 +153,22 @@ variable "db_skip_final_snapshot" {
   default     = null
   nullable    = true
 }
+
+variable "enable_bastion" {
+  description = "Whether to create the optional public bastion host."
+  type        = bool
+  default     = false
+}
+
+variable "bastion_instance_type" {
+  description = "EC2 instance type for the optional bastion."
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "bastion_key_name" {
+  description = "Optional SSH key pair for the bastion; prefer Session Manager."
+  type        = string
+  default     = null
+  nullable    = true
+}

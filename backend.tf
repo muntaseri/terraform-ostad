@@ -3,7 +3,7 @@
 #
 # terraform {
 #   backend "s3" {
-#     bucket       = "replace-with-your-state-bucket"
+#     bucket       = "terraform-ostad-montaser-lock"
 #     key          = "terraform-ostad/terraform.tfstate"
 #     region       = "us-east-1"
 #     encrypt      = true

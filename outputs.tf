@@ -77,3 +77,13 @@ output "s3_bucket_arn" {
   description = "ARN of the private application S3 bucket."
   value       = module.s3.bucket_arn
 }
+
+output "bastion_instance_id" {
+  description = "Bastion instance ID when the optional bastion is enabled."
+  value       = var.enable_bastion ? module.bastion[0].instance_id : null
+}
+
+output "bastion_public_ip" {
+  description = "Bastion public IP when the optional bastion is enabled."
+  value       = var.enable_bastion ? module.bastion[0].public_ip : null
+}

@@ -200,5 +200,56 @@ it is not a read replica for scaling reads. It does not protect against
 region-wide outages, accidental or malicious data changes or deletion,
 application bugs, or replace the need for backups and recovery planning.
 
+# MILESTONE 06
+
+## EVIDENCE FOR MAYA
+
+- Environment configurations: [`dev.tfvars`](dev.tfvars) and
+  [`prod.tfvars`](prod.tfvars).
+- Production plan, generated with
+  `terraform plan -refresh=false -input=false -var-file=prod.tfvars`:
+  **Plan: 60 to add, 0 to change, 0 to destroy.** Dev plans **58 to add**;
+  prod adds one extra NAT Gateway and Elastic IP for per-AZ egress. Prod also
+  uses larger app and database instances, two minimum app instances, RDS
+  Multi-AZ, longer backup retention, deletion protection, and a final snapshot.
+  The plan is not applied.
+- Complete deployment documentation and cost estimate:
+  [`README.md`](README.md).
+- Destroy verification: the default workspace is `default`; its local state
+  contains zero resources and the S3 backend remains commented. Therefore the
+  requested `terraform destroy -var-file=dev.tfvars -auto-approve` completed
+  with `Resources: 0 destroyed.` There are no Terraform-managed resources in
+  this workspace to destroy. No genuine destroy screenshot can be provided
+  from an empty state.
+
+## DESIGN REVIEW
+
+### 1. Workspaces vs. separate state keys/directories — which for real production and why?
+
+For production, use a separate state key and preferably a separately controlled
+backend/account, with restricted IAM roles and a dedicated deployment pipeline.
+Separate keys make environment boundaries explicit and allow different access
+controls, approvals, retention, and recovery procedures. Workspaces can help
+with lightweight parallel environments but share the same backend and
+configuration access, so a mistaken workspace selection can target the wrong
+environment.
+
+### 2. Which three resources drive most of the cost, and how would you reduce them?
+
+1. **NAT Gateways and data processing:** use one NAT in dev, reduce outbound
+   traffic, and consider VPC endpoints for frequently used AWS services. Keep
+   one NAT per AZ in production when availability justifies the cost.
+2. **RDS:** choose the smallest suitable class, right-size from measured
+   utilization, and use Single-AZ for dev. Keep production Multi-AZ where the
+   recovery objective requires it; remove old snapshots only under the backup
+   retention policy.
+3. **App EC2 and ALB:** use smaller/Graviton instances where compatible,
+   schedule non-production capacity down when idle, and right-size ASG minimums.
+   Review ALB LCU usage and avoid unnecessary traffic or listeners.
 
 
+
+
+
+
+## Bonus
