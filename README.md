@@ -368,6 +368,37 @@ maintenance window, backup/final-snapshot review, and removal of deletion
 protection. Destroying the stack incurs no Terraform command fee, but retained
 snapshots and S3 versions can continue to incur storage charges.
 
+## Pull request CI
+
+The GitHub Actions workflow at
+[`terraform-ci.yml`](.github/workflows/terraform-ci.yml) runs formatting,
+initialization, validation, TFLint, and Checkov for every pull request. It
+creates a plan with `dev.tfvars` and comments only the resource action counts;
+it does not post the raw plan or apply changes.
+
+The PR plan currently disables the backend and refresh, so it is a static
+proposal based on an empty state—not a drift-aware plan against deployed dev
+state. To enable the AWS-dependent data lookups and plan comment, configure the
+repository variable `AWS_ROLE_TO_ASSUME` with a dedicated read-only IAM role
+trusted for this repository's GitHub Actions OIDC identity. Optionally set
+`AWS_REGION` as a repository variable; otherwise `us-east-1` is used. The role
+should be limited to required describe operations such as EC2 availability-zone
+and AMI lookups. Do not grant apply, destroy, or state-write permissions to the
+PR plan role. Forked PRs never receive AWS credentials; they run static checks
+only, because GitHub does not grant their workflows permission to post comments.
+
+Configure the role trust policy for GitHub's OIDC provider
+(`token.actions.githubusercontent.com`) with audience `sts.amazonaws.com` and
+subject `repo:<owner>/<repository>:pull_request`. Grant only the read actions
+needed by Terraform data sources, currently `ec2:DescribeAvailabilityZones`
+and `ec2:DescribeImages` on `*`. In repository settings, add `AWS_ROLE_TO_ASSUME`
+as an Actions variable (not a secret); optionally add `AWS_REGION`. Internal PR
+code can execute in the plan job, so use a dedicated read-only role and do not
+trust this role for deployment.
+
+For a state-aware plan, first enable the remote S3 backend and separately
+design a protected dev-state workflow with tightly scoped state access.
+
 ## Enable the S3 remote backend
 
 Create the Terraform state bucket manually before uncommenting the S3 backend
