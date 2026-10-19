@@ -28,6 +28,11 @@ variable "target_group_arn" {
   type        = string
 }
 
+variable "rds_master_user_secret_arn" {
+  description = "ARN of the RDS-managed master secret accessible from the app role."
+  type        = string
+}
+
 variable "instance_type" {
   description = "EC2 instance type for application instances."
   type        = string

@@ -92,6 +92,79 @@ and run a bounded CPU workload, for example
 CloudWatch CPU metric and Auto Scaling activity history; target tracking may
 take several minutes to add capacity. These drills can incur AWS charges.
 
+## RDS and S3 data protection
+
+The RDS module creates a MySQL DB subnet group from the isolated database
+subnets and a storage-encrypted, non-public DB instance protected by the
+database security group. RDS generates and manages the master password in
+Secrets Manager. Terraform exposes only the endpoint and secret ARN, never the
+password. The app instance role can call `secretsmanager:GetSecretValue` for
+that one secret so an authorized Session Manager session can connect to MySQL.
+
+Database defaults follow the environment: dev uses Single-AZ, no deletion
+protection, one day of backups, and skips the final snapshot; prod uses
+Multi-AZ, deletion protection, seven days of backups, and retains a final
+snapshot. Override these with `db_multi_az`, `db_deletion_protection`,
+`db_backup_retention_period`, and `db_skip_final_snapshot`. The class and
+initial database name use `db_instance_class` and `db_name`.
+
+The S3 module creates a globally unique bucket with a random suffix, versioning,
+AES-256 server-side encryption, bucket-owner-enforced ownership, all public
+access blocks, and a bucket policy that denies non-TLS requests.
+
+### Verify database secret access from an app instance
+
+After applying, copy the following endpoint and secret ARN values from
+`terraform output` into the Session Manager shell on an app instance. The
+instance role grants read access only to this RDS-generated secret. This uses a
+temporary, permission-restricted MySQL client file so the password is not put
+on the command line:
+
+```sh
+DB_HOST="<hostname from terraform output -raw db_endpoint, without :3306>"
+SECRET_ARN="<value from terraform output -raw db_master_user_secret_arn>"
+DB_NAME="<value from terraform output -raw db_name>"
+SECRET_JSON="$(aws secretsmanager get-secret-value \
+  --secret-id "$SECRET_ARN" \
+  --query SecretString --output text)"
+MYSQL_CNF="$(mktemp)"
+chmod 600 "$MYSQL_CNF"
+printf '[client]\nhost=%s\nuser=%s\npassword=%s\n' \
+  "$DB_HOST" \
+  "$(jq -r .username <<< "$SECRET_JSON")" \
+  "$(jq -r .password <<< "$SECRET_JSON")" > "$MYSQL_CNF"
+mysql --defaults-extra-file="$MYSQL_CNF" "$DB_NAME"
+# At the mysql> prompt, run: SELECT CURRENT_USER(), DATABASE();
+# Type exit to return to the shell, then remove the temporary credentials file:
+rm -f "$MYSQL_CNF"
+unset SECRET_JSON
+```
+
+Capture the successful MySQL query in the Session Manager terminal for the
+compliance evidence. Avoid printing the secret JSON or password in screenshots
+or logs.
+
+### Verify S3 denies HTTP
+
+With AWS CLI credentials authorized to write to the bucket, upload a temporary
+object, create a short-lived presigned URL, then change only its scheme to
+HTTP. The HTTPS request should succeed and the HTTP request should receive
+`403 AccessDenied` from the `aws:SecureTransport` bucket-policy deny:
+
+```sh
+BUCKET="$(terraform output -raw s3_bucket_name)"
+printf 'TLS policy check\n' > /tmp/s3-tls-check.txt
+aws s3 cp /tmp/s3-tls-check.txt "s3://$BUCKET/tls-check.txt"
+URL="$(aws s3 presign "s3://$BUCKET/tls-check.txt" --expires-in 60)"
+curl -i "$URL"
+curl -i "${URL/https:/http:}"
+aws s3 rm "s3://$BUCKET/tls-check.txt"
+rm -f /tmp/s3-tls-check.txt
+```
+
+Capture the HTTP response showing `403 AccessDenied` for the evidence. Remove
+the temporary object afterward if no longer needed.
+
 ## Enable the S3 remote backend
 
 The S3 bucket for Terraform state must be created manually before enabling the

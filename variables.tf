@@ -104,3 +104,52 @@ variable "app_max_size" {
     error_message = "Capacity values must be whole numbers and satisfy app_min_size <= app_desired_capacity <= app_max_size."
   }
 }
+
+variable "db_name" {
+  description = "Initial database name for the MySQL instance."
+  type        = string
+  default     = "appdb"
+}
+
+variable "db_instance_class" {
+  description = "RDS instance class."
+  type        = string
+  default     = "db.t3.micro"
+}
+
+variable "db_multi_az" {
+  description = "Override Multi-AZ; defaults off for dev and on for prod."
+  type        = bool
+  default     = null
+  nullable    = true
+}
+
+variable "db_deletion_protection" {
+  description = "Override deletion protection; defaults off for dev and on for prod."
+  type        = bool
+  default     = null
+  nullable    = true
+}
+
+variable "db_backup_retention_period" {
+  description = "Override automated backup retention in days; defaults to 1 for dev and 7 for prod."
+  type        = number
+  default     = null
+  nullable    = true
+
+  validation {
+    condition = var.db_backup_retention_period == null ? true : (
+      var.db_backup_retention_period >= 0 &&
+      var.db_backup_retention_period <= 35 &&
+      var.db_backup_retention_period == floor(var.db_backup_retention_period)
+    )
+    error_message = "db_backup_retention_period must be null or a whole number of days between 0 and 35."
+  }
+}
+
+variable "db_skip_final_snapshot" {
+  description = "Override final snapshot behavior; defaults to skip for dev and retain for prod."
+  type        = bool
+  default     = null
+  nullable    = true
+}

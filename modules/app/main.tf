@@ -56,6 +56,20 @@ resource "aws_iam_role_policy_attachment" "ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+resource "aws_iam_role_policy" "rds_secret_read" {
+  name = "${var.project_name}-${var.environment}-rds-secret-read"
+  role = aws_iam_role.app.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["secretsmanager:GetSecretValue"]
+      Resource = var.rds_master_user_secret_arn
+    }]
+  })
+}
+
 resource "aws_iam_instance_profile" "app" {
   name = "${var.project_name}-${var.environment}-app"
   role = aws_iam_role.app.name
@@ -106,7 +120,10 @@ resource "aws_launch_template" "app" {
     tags          = local.instance_tags
   }
 
-  depends_on = [aws_iam_role_policy_attachment.ssm]
+  depends_on = [
+    aws_iam_role_policy_attachment.ssm,
+    aws_iam_role_policy.rds_secret_read,
+  ]
 
   tags = {
     Name = "${var.project_name}-${var.environment}-app"

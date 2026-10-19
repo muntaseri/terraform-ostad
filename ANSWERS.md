@@ -162,3 +162,43 @@ each replacement boots; it is not rerun on existing instances in place. The
 configured minimum healthy percentage and warm-up period control replacement
 pacing, and the ALB health check controls when replacements become healthy
 targets.
+
+# MILESTONE 05
+
+## EVIDENCE FOR COMPLIANCE
+
+- RDS and S3 implementations: [`modules/rds/main.tf`](modules/rds/main.tf) and
+  [`modules/s3/main.tf`](modules/s3/main.tf).
+- Root module wiring and outputs: [`main.tf`](main.tf) and
+  [`outputs.tf`](outputs.tf).
+- After applying in AWS, capture:
+  1. An authorized Session Manager shell fetching the RDS-managed secret and
+     running a successful MySQL query. Do not show the secret value.
+  2. A short-lived presigned S3 URL succeeding over HTTPS and returning
+     `403 AccessDenied` over HTTP.
+
+These runtime checks require AWS credentials and deployed resources; they have
+not been run as part of this configuration change.
+
+## DESIGN REVIEW
+
+### 1. Why let RDS manage the password in Secrets Manager instead of passing it as a Terraform variable?
+
+A Terraform variable can expose a plaintext password in local variable files,
+shell history, CI logs, command output, or Terraform state and plans. With
+`manage_master_user_password = true`, RDS generates and manages the credential
+in Secrets Manager; this configuration references only the secret ARN and
+never retrieves the password into Terraform. IAM can limit secret access to
+authorized workloads and operators.
+
+### 2. What does Multi-AZ protect against, and what does it not protect against?
+
+Multi-AZ maintains a synchronous standby in another Availability Zone and
+supports automatic failover if the primary instance or its AZ becomes
+unavailable. It improves availability during certain infrastructure failures;
+it is not a read replica for scaling reads. It does not protect against
+region-wide outages, accidental or malicious data changes or deletion,
+application bugs, or replace the need for backups and recovery planning.
+
+
+

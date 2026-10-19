@@ -52,3 +52,28 @@ output "app_autoscaling_group_name" {
   description = "Name of the application Auto Scaling group."
   value       = module.app.autoscaling_group_name
 }
+
+output "db_endpoint" {
+  description = "RDS database endpoint hostname and port."
+  value       = module.rds.endpoint
+}
+
+output "db_name" {
+  description = "Name of the initial MySQL database."
+  value       = module.rds.database_name
+}
+
+output "db_master_user_secret_arn" {
+  description = "ARN of the RDS-managed master credential secret; the password is never output."
+  value       = module.rds.master_user_secret_arn
+}
+
+output "s3_bucket_name" {
+  description = "Name of the private, versioned application S3 bucket."
+  value       = module.s3.bucket_name
+}
+
+output "s3_bucket_arn" {
+  description = "ARN of the private application S3 bucket."
+  value       = module.s3.bucket_arn
+}
