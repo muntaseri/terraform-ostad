@@ -31,6 +31,67 @@ less but is shared across both AZs; two NAT gateways provide per-AZ egress
 availability. Root outputs expose the VPC ID and the public, private, database,
 and combined subnet ID lists.
 
+## Security groups
+
+The security group module follows a tiered trust model: public HTTP/HTTPS
+reaches the ALB; app HTTP is allowed only from the ALB; and MySQL is allowed
+only from the app security group. Bastion SSH ingress is disabled by default.
+To enable it, set `allowed_ssh_cidr` to your public IPv4 address in `/32`
+notation; app SSH is accepted only from the bastion security group.
+
+Egress is scoped to the required paths: ALB to app on TCP 80, app to database
+on TCP 3306 and outbound HTTP/HTTPS via NAT, and bastion to app on TCP 22.
+Security groups are stateful, so return traffic for allowed connections does
+not require a broad reverse-direction rule. The database security group has no
+initiated egress rule.
+
+## Self-healing nginx web tier
+
+The internet-facing ALB listens on HTTP port 80 and forwards to an instance
+target group with an HTTP `/` health check. The app module launches the latest
+Amazon Linux 2023 x86_64 AMI in the private subnets, installs nginx, starts the
+AMI's preinstalled SSM agent, and serves a page showing the instance hostname,
+availability zone, and environment.
+
+The launch template requires IMDSv2, encrypts the root EBS volume, and assigns
+an instance profile with `AmazonSSMManagedInstanceCore`. The Auto Scaling Group
+uses ELB health checks, a rolling instance refresh, and target tracking at 50%
+average CPU. Capacity and instance type are configurable with `app_min_size`,
+`app_desired_capacity`, `app_max_size`, and `app_instance_type`.
+
+After applying in an AWS account, get the web endpoint with:
+
+```sh
+terraform output -raw alb_dns_name
+```
+
+Open `http://<alb_dns_name>` or repeatedly run `curl` against that URL to
+observe requests served by registered instances. The endpoint output does not
+exist until the infrastructure has been applied.
+
+For Session Manager, select an instance in the Auto Scaling Group and connect
+without SSH keys:
+
+```sh
+aws ssm start-session --target <instance-id>
+```
+
+For a controlled replacement drill, terminate one instance without decreasing
+the desired capacity:
+
+```sh
+aws autoscaling terminate-instance-in-auto-scaling-group \
+  --instance-id <instance-id> \
+  --no-should-decrement-desired-capacity
+```
+
+Verify in the Auto Scaling Group activity history that a replacement launches
+and becomes healthy in the target group. For a scaling drill, connect with SSM
+and run a bounded CPU workload, for example
+`sudo dnf install -y stress-ng && stress-ng --cpu 2 --timeout 10m`. Observe the
+CloudWatch CPU metric and Auto Scaling activity history; target tracking may
+take several minutes to add capacity. These drills can incur AWS charges.
+
 ## Enable the S3 remote backend
 
 The S3 bucket for Terraform state must be created manually before enabling the

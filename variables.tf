@@ -58,3 +58,49 @@ variable "allowed_ssh_cidr" {
     error_message = "allowed_ssh_cidr must be null or a valid IPv4 /32 CIDR."
   }
 }
+
+variable "app_instance_type" {
+  description = "EC2 instance type for the application Auto Scaling group."
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "app_min_size" {
+  description = "Minimum application Auto Scaling group capacity."
+  type        = number
+  default     = 2
+
+  validation {
+    condition     = var.app_min_size >= 1 && var.app_min_size == floor(var.app_min_size)
+    error_message = "app_min_size must be a positive whole number."
+  }
+}
+
+variable "app_desired_capacity" {
+  description = "Desired application Auto Scaling group capacity."
+  type        = number
+  default     = 2
+
+  validation {
+    condition = (
+      var.app_desired_capacity == floor(var.app_desired_capacity) &&
+      var.app_desired_capacity >= var.app_min_size
+    )
+    error_message = "app_desired_capacity must be a whole number greater than or equal to app_min_size."
+  }
+}
+
+variable "app_max_size" {
+  description = "Maximum application Auto Scaling group capacity."
+  type        = number
+  default     = 4
+
+  validation {
+    condition = (
+      var.app_max_size == floor(var.app_max_size) &&
+      var.app_max_size >= var.app_desired_capacity &&
+      var.app_desired_capacity >= var.app_min_size
+    )
+    error_message = "Capacity values must be whole numbers and satisfy app_min_size <= app_desired_capacity <= app_max_size."
+  }
+}

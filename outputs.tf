@@ -42,3 +42,13 @@ output "bastion_security_group_id" {
   description = "ID of the bastion security group."
   value       = module.security_groups.bastion_security_group_id
 }
+
+output "alb_dns_name" {
+  description = "Public DNS name of the application load balancer."
+  value       = module.alb.alb_dns_name
+}
+
+output "app_autoscaling_group_name" {
+  description = "Name of the application Auto Scaling group."
+  value       = module.app.autoscaling_group_name
+}

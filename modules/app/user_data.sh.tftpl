@@ -1,0 +1,27 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf install -y nginx
+systemctl enable --now nginx
+systemctl enable --now amazon-ssm-agent
+
+TOKEN="$(curl --fail --silent --show-error -X PUT \
+  "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")"
+HOSTNAME_VALUE="$(hostname)"
+AZ="$(curl --fail --silent --show-error \
+  -H "X-aws-ec2-metadata-token: $${TOKEN}" \
+  http://169.254.169.254/latest/meta-data/placement/availability-zone)"
+
+cat > /usr/share/nginx/html/index.html <<HTML
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8"><title>${environment} web tier</title></head>
+  <body>
+    <h1>It works!</h1>
+    <p>Environment: ${environment}</p>
+    <p>Hostname: $${HOSTNAME_VALUE}</p>
+    <p>Availability Zone: $${AZ}</p>
+  </body>
+</html>
+HTML
