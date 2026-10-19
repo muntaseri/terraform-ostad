@@ -250,12 +250,17 @@ application bugs, or replace the need for backups and recovery planning.
   The plan is not applied.
 - Complete deployment documentation and cost estimate:
   [`README.md`](README.md).
-- Destroy verification: the default workspace is `default`; its local state
-  contains zero resources and the S3 backend remains commented. Therefore the
-  requested `terraform destroy -var-file=dev.tfvars -auto-approve` completed
-  with `Resources: 0 destroyed.` There are no Terraform-managed resources in
-  this workspace to destroy. No genuine destroy screenshot can be provided
-  from an empty state.
+- Destroy evidence: the screenshots show the dev Auto Scaling group set to zero
+  capacity, its EC2 instances terminated, Terraform destroying the remaining
+  resources, and the completed destroy with **58 resources destroyed**.
+
+![Dev Auto Scaling group capacity set to zero](screenshots/milestone-06/des-1.jpg)
+
+![Dev EC2 instances terminated](screenshots/milestone-06/des-2.jpg)
+
+![Terraform destroy in progress](screenshots/milestone-06/des-3.jpg)
+
+![Terraform destroy completed with 58 resources destroyed](screenshots/milestone-06/des-4.jpg)
 
 ## DESIGN REVIEW
 
