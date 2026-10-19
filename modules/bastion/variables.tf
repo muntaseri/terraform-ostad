@@ -1,0 +1,1 @@
+# Bastion module input variables.
