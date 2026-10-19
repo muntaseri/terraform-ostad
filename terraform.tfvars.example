@@ -1,5 +1,6 @@
-project_name = "terraform-ostad"
-environment  = "dev"
-aws_region   = "us-east-1"
-vpc_cidr     = "10.0.0.0/16"
-owner        = "team-name"
+project_name       = "terraform-ostad"
+environment        = "dev"
+aws_region         = "us-east-1"
+vpc_cidr           = "10.0.0.0/16"
+owner              = "team-name"
+single_nat_gateway = true
