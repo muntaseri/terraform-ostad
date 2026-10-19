@@ -1,0 +1,32 @@
+alb_dns_name = "terraform-ostad-dev-alb-607545089.us-east-1.elb.amazonaws.com"
+alb_security_group_id = "sg-0eb030bb716ff54b8"
+all_subnet_ids = [
+  "subnet-0341e1446cde598de",
+  "subnet-0dcccee9fe3f14792",
+  "subnet-08e7bfbcd571d2b7e",
+  "subnet-0067d625d9f422f11",
+  "subnet-02a884466e06e2665",
+  "subnet-00db9d2f1c8e076c7",
+]
+app_autoscaling_group_name = "terraform-ostad-dev-app"
+app_security_group_id = "sg-0d60d0b6f71957791"
+bastion_security_group_id = "sg-0aabcbfe99e515b13"
+database_security_group_id = "sg-087ada9ef117a28a9"
+database_subnet_ids = [
+  "subnet-02a884466e06e2665",
+  "subnet-00db9d2f1c8e076c7",
+]
+db_endpoint = "terraform-ostad-dev-mysql.csjgoyqkw5w2.us-east-1.rds.amazonaws.com:3306"
+db_master_user_secret_arn = "arn:aws:secretsmanager:us-east-1:223532248928:secret:rds!db-958c04a7-8704-42bf-873e-8d53ee976334-sKyc7S"
+db_name = "appdb"
+private_subnet_ids = [
+  "subnet-08e7bfbcd571d2b7e",
+  "subnet-0067d625d9f422f11",
+]
+public_subnet_ids = [
+  "subnet-0341e1446cde598de",
+  "subnet-0dcccee9fe3f14792",
+]
+s3_bucket_arn = "arn:aws:s3:::terraform-ostad-dev-91f35d1c766a"
+s3_bucket_name = "terraform-ostad-dev-91f35d1c766a"
+vpc_id = "vpc-07ddc2fd966bc59df"

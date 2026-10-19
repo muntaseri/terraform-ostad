@@ -26,7 +26,9 @@ conflicting changes and difficult recovery.
 
 
 
-![Terraform initialization and validation succeeded](screenshots/terra-init.jpg)
+![Terraform initialization and validation succeeded](screenshots/milestone-01/terraform-init-validation.jpg)
+
+![Terraform initialization with modules and validation succeeded](screenshots/milestone-01/terraform-init-validation-with-modules.jpg)
 
 
 
@@ -139,8 +141,28 @@ HTTPS traffic.
   4. CloudWatch CPU and Auto Scaling activity showing scale-out during a
      bounded CPU load.
 
-These runtime drills require AWS credentials and an apply; they have not been
-run as part of this configuration change.
+### Captured web-tier evidence
+
+![Nginx response from an instance in AZ 1](screenshots/milestone-04/alb-response-az1.jpg)
+
+![Nginx response from an instance in AZ 2](screenshots/milestone-04/alb-response-az2.jpg)
+
+![Session Manager shell connected to an app instance](screenshots/milestone-04/session-manager.jpg)
+
+![CloudWatch CPU utilization during the scaling drill](screenshots/milestone-04/cpu-utilization-scale-out.jpg)
+
+![Auto Scaling activity history during the scaling drill](screenshots/milestone-04/asg-activity-history-scale-out.jpg)
+
+![Terminated app instance in the EC2 instances list](screenshots/milestone-04/manual-termination-instance-state.jpg)
+
+![Auto Scaling activity replacing the terminated app instance](screenshots/milestone-04/manual-termination-replacement-activity.jpg)
+
+The screenshots show ALB responses from two AZs, an SSM session, CPU utilization
+reaching approximately 57%, and Auto Scaling activity launching an additional
+instance after target tracking raised desired capacity from one to two. The
+activity history also shows a terminated instance being taken out of service
+and a replacement instance launching because the unhealthy instance needed to
+be replaced.
 
 ## DESIGN REVIEW
 
@@ -177,8 +199,21 @@ targets.
   2. A short-lived presigned S3 URL succeeding over HTTPS and returning
      `403 AccessDenied` over HTTP.
 
-These runtime checks require AWS credentials and deployed resources; they have
-not been run as part of this configuration change.
+### Captured compliance evidence
+
+![Successful MySQL query from an app instance in Session Manager](screenshots/milestone-05/mysql-session-query.jpg)
+
+![S3 HTTP request denied by bucket policy](screenshots/milestone-05/s3-http-denied.jpg)
+
+![S3 requests using both HTTPS and HTTP](screenshots/milestone-05/s3-http-and-https-requests.jpg)
+
+The combined terminal capture shows both HTTPS and HTTP requests, and both
+returned `403 Forbidden`. This confirms denial but does not demonstrate that
+HTTPS access succeeds. For complete evidence of the transport policy, retry
+HTTPS using a valid presigned URL for an object the requester can read, then
+repeat the same URL over HTTP and capture the HTTPS success and HTTP
+`AccessDenied` together. Do not include presigned URLs in public screenshots;
+they contain temporary credentials.
 
 ## DESIGN REVIEW
 
@@ -253,3 +288,4 @@ environment.
 
 
 ## Bonus
+CI pipeline added
